@@ -67,10 +67,13 @@ In the next section, we will look at the solution Vere (the runtime) currently u
 ------------------------------------
 
 ## Current Implementation
-Vere (the runtime) uses a registration and runtime matching system to ensure that jet hints can't use incorrect labels.
+Vere (the runtime) solves the above problems with a 3-part approach:
+- jetted core registration 
+- Hoon compilation of hinted cores
+- run-time matching system to verify that hinted cores match registered ones
 
-### Concept 
-At the time the runtime is compiled, we declare all jetted cores that the runtime knows about. This is done in `pkg/urbit/jets/tree.c`.
+### Jetted Core Registration 
+At the time the runtime is compiled, we declare all jetted cores that the runtime can use. This is done in `pkg/urbit/jets/tree.c`.
 All jetted core declarations must include:
 - their label (e.g. `%dec`)
 - the hash of their formula
