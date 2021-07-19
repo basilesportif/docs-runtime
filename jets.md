@@ -69,7 +69,7 @@ In the next section, we will look at the solution Vere (the runtime) currently u
 ## Current Implementation
 Vere (the runtime) solves the above problems with a 3-part approach:
 - jetted core registration 
-- Hoon compilation of hinted cores
+- Hoon compilation of jet hints
 - run-time matching system to verify that hinted cores match registered ones
 
 ### Jetted Core Registration 
@@ -90,13 +90,13 @@ The gate rune `|=` also makes a `[battery payload]` structure, with the addition
 
 The above diagram shows what data is held by the `dec` gate in `hoon.hoon`. It is a gate created by the `++  dec` arm in the `%math` core, so its battery is the `dec` Nock formula, and its payload is `[sample math-core]`.  It's "parent" can be thought of as the `%math` core. When the `%math` core itself is declared, its subject is the core with arm `hoon-version`, and so that becomes its context.  
 
-Note that the `dec` gate's context is `[sample parent-core]`, while the `%math` core's context is simply `parent-core]`.
+Note that the `dec` gate's context is `[sample parent-core]`, while the `%math` core's context is simply `parent-core]`.  `|=` creates a core with a `sample` in the context, but the important thing is that both cores do *have* a parent core--we just need to address it differently for each case.
 
-**TODO**: write how this makes sure any formulas referred to will be where we expect.
-**TODO** write up the basic idea to recur to the top
+#### tree.c Registration
+In `tree`.c`, any jetted core must declare which core is its parent, and where in the subject to locate it.  At a broad conceptual level, this means that we can recur backwards through any registered core to see what its parent is expected to be.
 
-### Specifics
-To implement this concept, Vere currently requires a specific form of hinting in Hoon that compiles to the necessary Nock, and registration of jets when the runtime is compiled. Let's look at these in order.
+### Hoon Compilation of Jet Hints
+`tree.c` registration tells Vere which parent cores a given jetted core should have. The next thing we need is a way for Hoon jet hints to *also* commit to a parent core. This is done (usually) using the `~%` and `%/` runes.
 
 Hoon hinting is applied to cores (more on why in a bit), and uses the `~%` rune (or `~/` which is sugar for it). `~%` takes as args:
 - a name (e.g. `%dec`)
@@ -104,34 +104,12 @@ Hoon hinting is applied to cores (more on why in a bit), and uses the `~%` rune 
 - list of "hooks" (can ignore for this discussion; usually an empty lis)
 `~/` is just `~%` with `+>` (payload of a gate) for the parent wing, and `~` for the hooks list.
 
-Runtime jet registration happens in the `tree.c` file. There, jets must declare: 
+**TODO** finish the above
 
-### Core Hinting and Parent Cores
-If you look at `hoon.hoon`, you'll notice that all the `~%` and `~/` hints occur right above cores. Because core declarations in Hoon always capture the current subject as part of their context, we can use the parent wing arg to `~%` to mean "my parent core is located here in the subject."
-
-But what's a parent core, and why do we need to declare it?
-
-**TODO/note**: the following is probably the hardest part here to explain textually/verbally, and needs to be gotten right. Maybe a "challenges of jets" section above?
-Go back to our discussion of the `const` gate that was hinted as `dec`. To verify that a given `dec` hint really is hinting the `dec` gate/core registered in `tree.c`, we need to 
-**TODO** explain why we hint cores, not formulas (parent ref)
-
-## Current Jet Matching/Registration Process
-With all of that background, we are now ready to state succintly how jet registration and matching happens.
-The information above is declared in `tree.c`. "Jet matching" refers to the process of the interpreter checking whether a jet hint in Nock matches the jet registered in `tree.c`.
-
-In the current implementation of the Urbit runtime:
-* developers write cores hinted with jets
-* those jets are registered with the runtime
-* the runtime uses that registration to check whether a given jet hint is valid
-
-### At Code Writing Time
-When a developer hints a core, he must explictly give a path to the core's "parent".
-**TODO**: note that cores, not formulas, are hinted.
-
-### At Registration Time
-
-
-#### Jet Validation at Runtime
+### Run-Time Jet Matching System
+Now Vere has enough information to avoid the problems we mentioned in the Motivation section. Whenever it encounters a core that is hinted with a jet, it runs the following algorithm (simplified slightly for explanation):
+1. retrieve the jet registered with the hinted label
+2. **TODO** finish 
 
 -------------------------------
 ## Jet Writing Process
