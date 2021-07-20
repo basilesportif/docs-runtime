@@ -4,6 +4,9 @@ Who you are: someone who a bit of Hoon and (ideally but not necessarily) Nock. Y
 
 What you'll know after reading: 
 - why Urbit jets work the way they do
+- how Urbit jets currently work
+
+**BELOW are TODO**
 - what you need to do to write them
 - how you'd implement a Nock interpreter that uses them
 - how they're going to get easier to manage in future runtimes
