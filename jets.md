@@ -92,25 +92,48 @@ The above diagram shows what data is held by the `dec` gate in `hoon.hoon`. It i
 
 Note that the `dec` gate's context is `[sample parent-core]`, while the `%math` core's context is simply `parent-core]`.  `|=` creates a core with a `sample` in the context, but the important thing is that both cores do *have* a parent core--we just need to address it differently for each case.
 
+How does this help us? It means that *all* cores include their parent as part of their data structure. As long as we know which part of that data structure holds the parent, we can check at runtime whether it's the parent we were expecting.
+
 #### tree.c Registration
-In `tree`.c`, any jetted core must declare which core is its parent, and where in the subject to locate it.  At a broad conceptual level, this means that we can recur backwards through any registered core to see what its parent is expected to be.
+When we register a core in `tree`.c`, the core must declare which core is its parent, and where in the subject to locate it.  At a broad conceptual level, this means that we can recur backwards through any registered core to see what its parent is expected to be.
 
 ### Hoon Compilation of Jet Hints
-`tree.c` registration tells Vere which parent cores a given jetted core should have. The next thing we need is a way for Hoon jet hints to *also* commit to a parent core. This is done (usually) using the `~%` and `%/` runes.
+`tree.c` registration tells Vere which parent cores a given jetted core should have. Now we need way for Hoon jet hints to also commit the hinted core to a specific parent core. This is done (usually) using the `~%` and `%/` runes.
 
-Hoon hinting is applied to cores (more on why in a bit), and uses the `~%` rune (or `~/` which is sugar for it). `~%` takes as args:
+Hoon jet hinting is applied directly before core declarations, and uses the `~%` rune (or `~/` which is sugar for it). `~%` takes as args:
 - a name (e.g. `%dec`)
 - a wing that locates this core's "parent"
-- list of "hooks" (can ignore for this discussion; usually an empty lis)
+- list of "hooks" (can ignore for this discussion; usually an empty list)
+
 `~/` is just `~%` with `+>` (payload of a gate) for the parent wing, and `~` for the hooks list.
 
-**TODO** finish the above
+The "wing that locates the core's parent" can be:
+- a lark expression (`+` locates the parent for a normal `|%` core) 
+- a Hoon expression like `..add` ("the subject of the parent core of `add`, aka `add`'s parent core)
+
+### Pause and Summary
+Before moving to the run-time jet matching system, let's look at what we've bought with jet registration in the binary and Hoon compilation of jet hints:
+- the runtime has to commit to a certain set of jets
+- those jets have to commit to having specific parents 
+- jetted cores in Hoon have to commit to what their parents are
+
+All of this means that any time the runtime comes across a jet hint in Nock code, it has tthe information necessary to see whether the jetted core is indeed registered in the runtime.
 
 ### Run-Time Jet Matching System
 Now Vere has enough information to avoid the problems we mentioned in the Motivation section. Whenever it encounters a core that is hinted with a jet, it runs the following algorithm (simplified slightly for explanation):
-1. retrieve the jet registered with the hinted label
-2. **TODO** finish 
+1. retrieve the jet registered with the hinted label from the runtime
+2. retrieve the parent core of the jet
+3. if the core is an atomic value (`%140` currently), then **SUCCESS**
+4. otherwise, check that the core's formula has the same hash as the registered formula
+5. run this same algorithm on the parent of the jetted core
+
+Intuitively, we check that the formula of the jetted core matches the formula of the registered core with that label, and if so, recur to check the core's parent against the registered parent.
+
+`hoon.hoon` currently includes an atom (`%140`, for the Kelvin version) at the top of the file, which is the subject when the 1st ("Layer 1") core is created. Both `tree.c` and the compiled Nock recur back to this.
 
 -------------------------------
-## Jet Writing Process
-
+## Weaknesses of the Current System
+- have to compile jets into the binary
+- matching is slower than it needs to be
+- configuration is too complex: `tree.c` contains a programmatic tree in a flat file, rather than being declarative
+- runtime implementation is more complex than it needs to be
