@@ -96,28 +96,30 @@ The gate rune `|=` also makes a `[battery payload]` structure, with the addition
 
 ![tree of cores diagram](img/basic_cores.png)
 
-The above diagram shows what data is held by the `dec` gate in `hoon.hoon`. It is a gate created by the `++  dec` arm in the `%math` core, so its battery is the `dec` Nock formula, and its payload is `[sample math-core]`.  It's "parent" can be thought of as the `%math` core. When the `%math` core itself is declared, its subject is the core with arm `hoon-version`, and so that becomes its payload.  
+The above diagram shows what data is held by the `dec` gate in `hoon.hoon`. It is a gate created by the `++  dec` arm in the layer-1 core, so its battery is the `dec` Nock formula, and its payload is `[sample math-core]`.  It's "parent" can be thought of as the layer-1 core. When the layer-1 core itself is declared, its subject is the core with arm `hoon-version`, and so that becomes its payload.  
 
-Note that the `dec` gate's payload is `[sample parent-core]`, while the `%math` core's payload is simply `parent-core]`.  `|=` creates a core with a `sample` in the context, but the important thing is that both cores do *have* a parent core--we just need to address it differently for each case.
+Note that the `dec` gate's payload is `[sample parent-core]`, while the layer-1 core's payload is simply `parent-core`.  `|=` creates a core with a `sample` in the context, but the important thing is that both cores do *have* a parent core--we just need to address it differently for each case.
 
 How does this help us? It means that *all* cores include their parent as part of their data structure. As long as we know which part of that data structure holds the parent, we can check at runtime whether it's the parent we were expecting.
 
 #### tree.c Registration
-When we register a core in `tree.c`, the core must declare which core is its parent, and where in the subject to locate it.  At a broad conceptual level, this means that we can recur backwards through any registered core to see what its parent is expected to be.
+When we register a core in `tree.c`, the core must declare which core is its parent, and where in the subject to locate that parent.  At a broad conceptual level, since each registered core is labeled with its parent's location within its payload, we can recursively follow those labels down the stack of cores all the way down to the root core at the bottom right.
 
 ### Hoon Compilation of Jet Hints
-`tree.c` registration tells Vere which parent cores a given jetted core should have. Now we need a way for Hoon jet hints to also commit the hinted core to a specific parent core. This is done (usually) using the `~%` and `%/` runes.
+`tree.c` registration tells Vere which parent cores a given jetted core should have. Now we need a way for Hoon jet hints to also commit the hinted core to a specific parent core. This is done (usually) using the `~%` and `~/` runes.
 
 Hoon jet hinting is applied directly before core declarations, and uses the `~%` rune (or `~/` which is sugar for it). `~%` takes as args:
 - a name (e.g. `%dec`)
-- a wing that locates this core's "parent"
+- Hoon code (nearly always a wing) that locates this core's "parent"
 - list of "hooks" (can ignore for this discussion; usually an empty list)
 
-`~/` is just `~%` with `+>` (payload of a gate) for the parent wing, and `~` for the hooks list.
+`~/` is just `~%` with `+>` (`context` of a gate) for the parent wing, and `~` for the hooks list.
 
 The "wing that locates the core's parent" can be:
 - a lark expression (`+` locates the parent for a normal `|%` core) 
-- a Hoon expression like `..add` ("the subject of the parent core of `add`, aka `add`'s parent core)
+- a Hoon expression like `..add` ("the core containing the arm `add`")
+
+**note**: keep in mind that the runtime does not *have* to have jets corresponding to jet hints. It can simply run the Nock instead. Hints are often used without matching jets in order to do profiling: if you want a core's arms to show up in a CPU performance flame graph, you put a jet hint on the core.
 
 ### Pause and Summary
 Before moving to the run-time jet matching system, let's look at what we've bought with jet registration in the binary and Hoon compilation of jet hints:
@@ -137,7 +139,7 @@ Now Vere has enough information to avoid the problems we mentioned in the Motiva
 
 Intuitively, we check that the formula of the jetted core matches the formula of the registered core with that label, and if so, recur to check the core's parent against the registered parent.
 
-`hoon.hoon` currently includes an atom (`%140`, for the Kelvin version) at the top of the file, which is the subject when the 1st ("Layer 1") core is created. Both `tree.c` and the compiled Nock recur back to this.
+`hoon.hoon` currently includes an atom (`%140`, for the Kelvin version) at the top of the file, which is the subject when the 1st ("anchor") core is created. Both `tree.c` and the compiled Nock recur back to this.
 
 -------------------------------
 ## Weaknesses of the Current System
