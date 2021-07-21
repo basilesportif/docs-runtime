@@ -110,7 +110,7 @@ When we register a core in `tree.c`, the core must declare which core is its par
 
 Hoon jet hinting is applied directly before core declarations, and uses the `~%` rune (or `~/` which is sugar for it). `~%` takes as args:
 - a name (e.g. `%dec`)
-- Hoon code (nearly always a wing) that locates this core's "parent"
+- a Hoon expression (usually a wing like `+>` or `..add`) that, when run against the hinted code, produces the parent core"
 - list of "hooks" (can ignore for this discussion; usually an empty list)
 
 `~/` is just `~%` with `+>` (`context` of a gate) for the parent wing, and `~` for the hooks list.
