@@ -1,6 +1,6 @@
 # Jets in the Urbit Runtime
 
-Who you are: someone who a bit of Hoon and (ideally but not necessarily) Nock. You don't know much about the runtime or jet system.
+Who you are: someone who knows a bit of Hoon and (ideally but not necessarily) Nock. You don't know much about the runtime or jet system.
 
 What you'll know after reading: 
 - why Urbit jets work the way they do
@@ -21,12 +21,14 @@ If you *don't* already know Nock, it may be useful to gain a background:
 ## Motivation
 
 ### How You'd Think Jets Work
-When people hear about "jets" that can be called in place of Nock funcitons, or that Nock allows "hints" to be compiled into code, they assume that a jet would work roughly as follows:
-1. The programmer puts a "hint" on a function, (e.g. `dec`), and that hint compiles around a chunk of code.
+When people hear about "jets" that can be called in place of Nock functions, or that Nock allows "hints" to be compiled into code, they assume that a jet would work roughly as follows:
+1. The Hoon programmer puts a "hint" on a function, (e.g. `dec`), and that Hoon compiles down to a Nock 11 hint wrapping the compiled function.
 2. When the runtime encounters code marked with `dec`, it checks whether it has a jet called `dec`, and calls it with the current subject as the argument if such a jet exists.
 3. The jet runs and returns its result.
 
-Of course, this requires trust/verification/testing that the `dec` jet and the Hoon/Nock `dec` work the same way, but that's not too different from software distribution concerns in general.
+In this model, the primary risks are
+- jet code that isn't properly tested
+- malicious jets that don't run Nock properly, distributed by the runtime
 
 ### Why Jets Don't Work That Way
 **disclaimer** The code and description of the runtime in this section are imaginary.
@@ -45,10 +47,11 @@ Now, when the runtime encounters the Nock compiled from `const` at a call site, 
 #### First Attempt at a Fix
 A naive solution to this problem would be to register the jet's formula with the runtime (when the runtime is compiled) and then check whether the battery in the hinted core matched the registered formula.
 
-Unfortunately, there's a big problem with that. Any Nock formula can include an instruction to pull code out of any place in the current subject, and execute that code (generally this would be a Nock 9, but it can be done in several ways). So if you have a formula that says
-- grab the core at "memory slot" 31
+Unfortunately, there's a big problem with that. Any Nock formula can include an instruction to pull code out of any place in the current subject, and execute that code (generally this would be a Nock 9, but it can be done in several ways). So if you have a formula that says...
+- grab the core at "tree slot" 31
 - run arm 4 of that core
-we have no way of knowing, just by looking at the formula, what core/code is currently in slot 31.
+
+...we have no way of knowing, just by looking at the formula, what core/code is currently in slot 31.
 
 So it's not enough just to compare the hinted formula to the registered formula; we also must make sure that both have the same subject.
 
@@ -57,15 +60,17 @@ It gets a bit worse. For simple cores, we could register the battery+payload Noc
 
 However, for gates (which are one-armed cores where the payload is treated as `[sample context]`), this doesn't work. The gate caller will change the sample (function argument) when calling, so just registering the battery+payload with the runtime and comparing it doesn't work.  This isn't just an issue with gates: even simple cores can use `=+` to make replaceable samples, to take one example.
 
-#### Note on the Above Problems
-The reader may note that these problems could be resolved by requiring users to check jet hints in code they install for conflicts with `hoon.hoon` jet names. As a result, there is some disagreement among Urbit developers as to whether this is a problem. For now, just know that the current runtime *does* consider it to be a problem and takes steps to avoid it, and future solutions seem likely to as well.
+#### This Problem Is Hard
+You might think that you could just analyze any code you're installing to see whether it has jet hints that conflict with existing ones, but that's not sufficient. It's possible to ship a program that dynamically constructs jet hints, and users wouldn't be able to statically analyze to determine this was happening prior to install.
 
 #### Problem Summary
-To summarize, we cannot use the naive approach ("runtime checks whether this hinted formula is registered") for two reasons:
-1. The formula can call formulas located in other parts of the subject
-2. The subject itself can be different at different call sites, because of sample replacement (more generally, payload mutation).
+To summarize, the runtime cannot naively check *only* whether a hinted formula matches a registered formula for that hint. It must also make sure that the current subject matches the registered subject, because:
 
-In the next section, we will look at the solution Vere (the runtime) currently uses for this.
+1. subjects can vary in the code and data they hold, even when a formula is the same
+2. the same jet run on a different subject can do completely different things, in ways that could be dangerous
+3. programmers can create jet hints in ways that make it hard/impossible to check for malicious hinting at compile/install time
+
+In the next section, we will look more mechanically at the solution Vere (the runtime) currently uses for this.
 
 ------------------------------------
 
@@ -87,21 +92,21 @@ What does "location in the tree of cores mean?"
 
 Declaring a core (using `|%`) returns a data structure that looks like `[battery payload]`, where `battery` is a tree of formulas (the "arms" of the core), and `payload` is the current subject. 
 
-The gate rune `|=` also makes a `[battery payload]` structure, with the additional restriction that `battery` is just one formula (with the face `$`) and that `payload` is of form `[sample context]`, where `sample` is a value that will be replaced at each call site, and `context` is the current subject where the gate is declared.
+The gate rune `|=` also makes a `[battery payload]` structure, with the additional restriction that `battery` is just one formula (with the face `$`) and that `payload` is of form `[sample context]`, where `sample` is a value that each call site replaces with its own argument, and `context` is the current subject where the gate is declared.
 
 ![tree of cores diagram](img/core_tree.png)
 
-The above diagram shows what data is held by the `dec` gate in `hoon.hoon`. It is a gate created by the `++  dec` arm in the `%math` core, so its battery is the `dec` Nock formula, and its payload is `[sample math-core]`.  It's "parent" can be thought of as the `%math` core. When the `%math` core itself is declared, its subject is the core with arm `hoon-version`, and so that becomes its context.  
+The above diagram shows what data is held by the `dec` gate in `hoon.hoon`. It is a gate created by the `++  dec` arm in the `%math` core, so its battery is the `dec` Nock formula, and its payload is `[sample math-core]`.  It's "parent" can be thought of as the `%math` core. When the `%math` core itself is declared, its subject is the core with arm `hoon-version`, and so that becomes its payload.  
 
-Note that the `dec` gate's context is `[sample parent-core]`, while the `%math` core's context is simply `parent-core]`.  `|=` creates a core with a `sample` in the context, but the important thing is that both cores do *have* a parent core--we just need to address it differently for each case.
+Note that the `dec` gate's payload is `[sample parent-core]`, while the `%math` core's payload is simply `parent-core]`.  `|=` creates a core with a `sample` in the context, but the important thing is that both cores do *have* a parent core--we just need to address it differently for each case.
 
 How does this help us? It means that *all* cores include their parent as part of their data structure. As long as we know which part of that data structure holds the parent, we can check at runtime whether it's the parent we were expecting.
 
 #### tree.c Registration
-When we register a core in `tree`.c`, the core must declare which core is its parent, and where in the subject to locate it.  At a broad conceptual level, this means that we can recur backwards through any registered core to see what its parent is expected to be.
+When we register a core in `tree.c`, the core must declare which core is its parent, and where in the subject to locate it.  At a broad conceptual level, this means that we can recur backwards through any registered core to see what its parent is expected to be.
 
 ### Hoon Compilation of Jet Hints
-`tree.c` registration tells Vere which parent cores a given jetted core should have. Now we need way for Hoon jet hints to also commit the hinted core to a specific parent core. This is done (usually) using the `~%` and `%/` runes.
+`tree.c` registration tells Vere which parent cores a given jetted core should have. Now we need a way for Hoon jet hints to also commit the hinted core to a specific parent core. This is done (usually) using the `~%` and `%/` runes.
 
 Hoon jet hinting is applied directly before core declarations, and uses the `~%` rune (or `~/` which is sugar for it). `~%` takes as args:
 - a name (e.g. `%dec`)
