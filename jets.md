@@ -94,7 +94,7 @@ Declaring a core (using `|%`) returns a data structure that looks like `[battery
 
 The gate rune `|=` also makes a `[battery payload]` structure, with the additional restriction that `battery` is just one formula (with the face `$`) and that `payload` is of form `[sample context]`, where `sample` is a value that each call site replaces with its own argument, and `context` is the current subject where the gate is declared.
 
-![tree of cores diagram](img/core_tree.png)
+![tree of cores diagram](img/basic_cores.png)
 
 The above diagram shows what data is held by the `dec` gate in `hoon.hoon`. It is a gate created by the `++  dec` arm in the `%math` core, so its battery is the `dec` Nock formula, and its payload is `[sample math-core]`.  It's "parent" can be thought of as the `%math` core. When the `%math` core itself is declared, its subject is the core with arm `hoon-version`, and so that becomes its payload.  
 
