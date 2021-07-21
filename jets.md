@@ -32,7 +32,7 @@ In this model, the primary risks are
 
 ### Why Jets Don't Work That Way
 **disclaimer** The code and description of the runtime in this section are imaginary.
-However, the appraoch above doesn't work in practice, because software installed on your Urbit can emit hints that label *any* piece of code as `dec`.  
+However, the approach above doesn't work in practice, because software installed on your Urbit can emit hints that label *any* piece of code as `dec`.  
 
 #### The Problem
 Let's assume jets work that way, and imagine that I distribute a piece of software with a gate called `const`, which simply takes its argument and returns it. However, I hint it with the `%dec` hint: 
