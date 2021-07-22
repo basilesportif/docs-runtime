@@ -142,7 +142,25 @@ Intuitively, we check that the formula of the jetted core matches the formula of
 `hoon.hoon` currently includes an atom (`%140`, for the Kelvin version) at the top of the file, which is the subject when the 1st ("anchor") core is created. Both `tree.c` and the compiled Nock recur back to this.
 
 -------------------------------
+## Some Examples
+Here we'll look at examples of how registration and hinting look in practice.  We'll use [this version of hoon.hoon](https://github.com/urbit/urbit/blob/b0c9fd1940fe1c119438947ac0a45bafec135860/pkg/arvo/sys/hoon.hoon) in order to be able to refer to line numbers.
+
+### Hoon: Pinned Variable(s): the `by` Door
+[The by door](https://github.com/urbit/urbit/blob/b0c9fd1940fe1c119438947ac0a45bafec135860/pkg/arvo/sys/hoon.hoon#L1453) uses `~/` to declare its hint. This is a shortcut for `~%` with the parent core declared as `+>`. Note that `by` is a wet core, and not a gate...however, before declaring the `|@`, it pins the variable `a` as the head of its subject (line 1455). So when the `|@` declaration happens, the subject is `[a current-subject]`, where `current-subject` is the parent core we want to refer to.
+
+### Hoon: Locate Parent with `+`
+[The "layer 2" core](https://github.com/urbit/urbit/blob/b0c9fd1940fe1c119438947ac0a45bafec135860/pkg/arvo/sys/hoon.hoon#L437) is hinted with `~%`, and its parent is located with `+` (tail). It's declared in line 438 with a simple `|%` and no variables pinned, so the parent is just the tail of `[formula payload]`.
+
+### Hoon: Locate Parent with a `..` expression
+[The `sha` core](https://github.com/urbit/urbit/blob/b0c9fd1940fe1c119438947ac0a45bafec135860/pkg/arvo/sys/hoon.hoon#L437) is hinted with `~%` and the parent as `..sha`. This means "the subject of the core containing the arm `sha`, i.e. `sha`'s parent core.
+
+Why do we use `..sha` here and not a simple lark expression? In line 3617, `=>` creates a core that is captured by `sha` as its `payload`, and the actual parent of `sha` is inside *that* helper core (if this confuses you, draw out the tree of cores). We could still locate `sha`'s parent using the lark expression `+>`. However, it's easier to quickly reason about the code by skipping that chain of reasoning and just say "my parent is the core containing `sha`."
+
+### tree.c: 
+
+-------------------------------
 ## Weaknesses of the Current System
+
 - have to compile jets into the binary
 - matching is slower than it needs to be
 - configuration is too complex: `tree.c` contains a programmatic tree in a flat file, rather than being declarative
