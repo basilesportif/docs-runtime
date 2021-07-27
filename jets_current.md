@@ -1,15 +1,12 @@
-# Jets in the Urbit Runtime
+# Jets in the Urbit Runtime (July 2021)
+The below document will at some point become outdated, at which point it will be updated as a historical piece to understand how the new jet system was arrived at.
 
 Who you are: someone who knows a bit of Hoon and (ideally but not necessarily) Nock. You don't know much about the runtime or jet system.
 
 What you'll know after reading: 
 - why Urbit jets work the way they do
 - how Urbit jets currently work
-
-**BELOW are TODO**
-- what you need to do to write them
-- how you'd implement a Nock interpreter that uses them
-- how they're going to get easier to manage in future runtimes
+- problems with the current system
 
 And you're going to learn this all pretty quickly, because it's not that complicated!
 
@@ -142,8 +139,41 @@ Intuitively, we check that the formula of the jetted core matches the formula of
 `hoon.hoon` currently includes an atom (`%140`, for the Kelvin version) at the top of the file, which is the subject when the 1st ("anchor") core is created. Both `tree.c` and the compiled Nock recur back to this.
 
 -------------------------------
+## Some Examples
+Here we'll look at examples of how registration and hinting look in practice.  We'll use [this version of hoon.hoon](https://github.com/urbit/urbit/blob/b0c9fd1940fe1c119438947ac0a45bafec135860/pkg/arvo/sys/hoon.hoon) in order to be able to refer to line numbers.
+
+### Hoon: Pinned Variable(s): the `by` Door
+[The by door](https://github.com/urbit/urbit/blob/b0c9fd1940fe1c119438947ac0a45bafec135860/pkg/arvo/sys/hoon.hoon#L1453) uses `~/` to declare its hint. This is a shortcut for `~%` with the parent core declared as `+>`. Note that `by` is a wet core, and not a gate...however, before declaring the `|@`, it pins the variable `a` as the head of its subject (line 1455). So when the `|@` declaration happens, the subject is `[a current-subject]`, where `current-subject` is the parent core we want to refer to.
+
+### Hoon: Locate Parent with `+`
+[The "layer 2" core](https://github.com/urbit/urbit/blob/b0c9fd1940fe1c119438947ac0a45bafec135860/pkg/arvo/sys/hoon.hoon#L437) is hinted with `~%`, and its parent is located with `+` (tail). It's declared in line 438 with a simple `|%` and no variables pinned, so the parent is just the tail of `[formula payload]`.
+
+### Hoon: Locate Parent with a `..` expression
+[The `sha` core](https://github.com/urbit/urbit/blob/b0c9fd1940fe1c119438947ac0a45bafec135860/pkg/arvo/sys/hoon.hoon#L437) is hinted with `~%` and the parent as `..sha`. This means "the subject of the core containing the arm `sha`, i.e. `sha`'s parent core.
+
+Why do we use `..sha` here and not a simple lark expression? In line 3617, `=>` creates a core that is captured by `sha` as its `payload`, and the actual parent of `sha` is inside *that* helper core (if this confuses you, draw out the tree of cores). We could still locate `sha`'s parent using the lark expression `+>`. However, it's easier to quickly reason about the code by skipping that chain of reasoning and just say "my parent is the core containing `sha`."
+
+### tree.c
+`tree.c` registers cores and their children. Let's follow the chain down from the top-level core of `_140_hex_d` (zuse) to its child [en:base16:mimes](https://github.com/urbit/urbit/blob/master/pkg/arvo/sys/zuse.hoon#L3924):
+* [_140_hex_d](https://github.com/urbit/urbit/blob/b0c9fd1940fe1c119438947ac0a45bafec135860/pkg/urbit/jets/tree.c#L441)
+* [_140_hex_mimes_d](https://github.com/urbit/urbit/blob/b0c9fd1940fe1c119438947ac0a45bafec135860/pkg/urbit/jets/tree.c#L40)
+* [_140_hex_mimes_base16_d](https://github.com/urbit/urbit/blob/b0c9fd1940fe1c119438947ac0a45bafec135860/pkg/urbit/jets/tree.c#L30)
+* [_140_hex_mimes_base16_en_d](https://github.com/urbit/urbit/blob/b0c9fd1940fe1c119438947ac0a45bafec135860/pkg/urbit/jets/tree.c#L18)
+
+Note that each parent lists its children, along with the location of that child's parent core. So `_140_hex_mimex_d` in line 40 has child `base16`, which is a normal core, so its parent is found in slot `3`. In contrast, `_140_hex_mimes_base16_d` has children `en` and `de`, which are both gates, so their parent core is found in slot `7`.
+
+### Detailed Note on Matching with `tree.c`
+`tree.c` parents store children, but when the interpreter does matching using the hint and the registration, it is starting at the child, and needs to see whether its parent is correct. So the matching process looks like:
+1. look up the hinted label
+2. check whether it is a top-level parent
+3. if not, get the label of its parent using the parent wing in the hint
+4. look up that parent label and repeat the algorithm
+
+-------------------------------
 ## Weaknesses of the Current System
+The current system is slower and harder to implement than it needs to be, and a lot of work is being done to fix its issues. A future article will explore the upcoming changes more fully. For now, the primary weaknesses are:
+
 - have to compile jets into the binary
 - matching is slower than it needs to be
 - configuration is too complex: `tree.c` contains a programmatic tree in a flat file, rather than being declarative
-- runtime implementation is more complex than it needs to be
+- runtime implementation is more complex than it needs to be, making it hard to write new interpreters
