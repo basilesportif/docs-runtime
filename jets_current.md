@@ -1,4 +1,5 @@
 # Jets in the Urbit Runtime (July 2021)
+The below document will at some point become outdated, at which point it will be updated as a historical piece to understand how the new jet system was arrived at.
 
 Who you are: someone who knows a bit of Hoon and (ideally but not necessarily) Nock. You don't know much about the runtime or jet system.
 
