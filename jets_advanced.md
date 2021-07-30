@@ -4,7 +4,9 @@ In the [current jets explainer](jets_current.md), we looked at how jet matching 
 ## Intro
 
 ### New Tools
-`!=` will be useful throughout this explainer. It lets you enter Hoon at the dojo and see what Nock that Hoon compiles to.  We can do this because every dojo command is run against the current subject, so dojo commands are just Nock formulas.
+We want to get deeper into how the compiler and runtime handle Nock, so `!=` will be useful throughout this explainer. It lets you enter Hoon at the dojo and see what Nock that Hoon compiles to.  We can do this because every dojo command is run against the current dojo subject, so dojo commands are just Nock formulas.
+
+Since `!=` gets a Nock formula, we can run that formula against the dojo subject by using `.*`.
 
 Examples:
 ```
@@ -13,21 +15,51 @@ Examples:
 [0 2]
 ::  x is located at address 2 in my Dojo subject; yours might be different
 
+> .*(. !=(x))
+56
+
 > !=(add)
 [9 36 0 2.047]
 ::  "get the core at slot 2047, and then pull the arm at slot 36 in it"
 ::  remember, add is an arm that *generates* a gate
 
 ::  running that Nock against the subject produces the same gate as
-::  pulling the add arm directly:
-> =(add .*(. [9 36 0 2.047]))
+::    pulling the add arm directly 
+> =(add .*(. !=(add)))
+%.y
 ```
 
 ### Reminders
 It's easy to get confused between arms and cores, particularly because arms can produce cores/gates. Remember: arms are just Nock formulas, while cores have formulas on the left side of their tree, and data (context) on the right side.
 
 ## The Core Stack
-**TODO** note that the final element of any gate is `140`
+**TODO** ask Ted what we want to explain here.
+All jet lookups depend on recurring back to the "bottom" of the "core stack". This is the subject that is built when an Urbit is booted up. Here's what is produced:
+**TODO** INSERT DIAGRAM
+
+Arvo is bootstrapped with a pre-compiled `hoon.hoon`, and then `lull` and `zuse` are compiled with Arvo as the subject. This creates that stack of cores, and we can observe it by **TODO**
+
+### Some Examples
+The context of the core containing `add is` the anchor core in line 10 of `hoon.hoon`. The 2nd piece of code here produces the core as Nock--note that its final element is `140`, the base parent atom that stops jet matching recursion.
+```
+> +>:..add
+<1.pnw %140>
+> .*(. !=(+:..add))
+[[0 3] 140]
+```
+
+We get the same thing if we take the tail of the tail of the core with `biff` (layer 2 core). It has the same parent as `add`, just one level further up. Its immediate "parent" is the core with `add`:
+```
+> +:..biff
+<46.hgz 1.pnw %140>
+> ..add
+<46.hgz 1.pnw %140>
+
+> +>:..biff
+<1.pnw %140>
+> .*(. !=(+>:..biff))
+[[0 3] 140]
+```
 
 ## Jet Walkthrough
 Now we will walk through the Hoon, Nock, and runtime registrations of the `add` jet in full. Before starting, run the below code, which sets `add-arm` to the formula that produces the `add` gate:
