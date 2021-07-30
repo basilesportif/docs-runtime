@@ -1,4 +1,4 @@
-# More Jets: Cores, Jets and Hints
+# More Jets: Cores, Implementation and Hints
 In the [current jets explainer](jets_current.md), we looked at how jet matching is done. Now, we'll move on to an explanation of Urbit's core stack, detailed examples of a jet and its registration, and the mechanics of how hints are implemented.
 
 ## Intro
@@ -6,9 +6,7 @@ In the [current jets explainer](jets_current.md), we looked at how jet matching 
 ### New Tools
 We want to get deeper into how the compiler and runtime handle Nock, so `!=` will be useful throughout this explainer. It lets you enter Hoon at the dojo and see what Nock that Hoon compiles to.  We can do this because every dojo command is run against the current dojo subject, so dojo commands are just Nock formulas.
 
-Since `!=` gets a Nock formula, we can run that formula against the dojo subject by using `.*`.
-
-Examples:
+Since `!=` gets a Nock formula, we can run that formula against the dojo subject by using `.*`:
 ```
 > =x 56
 > !=(x)
@@ -32,14 +30,14 @@ Examples:
 ### Reminders
 It's easy to get confused between arms and cores, particularly because arms can produce cores/gates. Remember: arms are just Nock formulas, while cores have formulas on the left side of their tree, and data (context) on the right side.
 
-## The Core Stack
+## The Core Stack & Parent Registration/Location
 **TODO** ask Ted what we want to explain here.
 All jet lookups depend on recurring back to the "bottom" of the "core stack". This is the subject that is built when an Urbit is booted up. Here's what is produced:
 **TODO** INSERT DIAGRAM
 
 Arvo is bootstrapped with a pre-compiled `hoon.hoon`, and then `lull` and `zuse` are compiled with Arvo as the subject. This creates that stack of cores, and we can observe it by **TODO**
 
-### Some Examples
+### Basic Examples
 The context of the core containing `add is` the anchor core in line 10 of `hoon.hoon`. The 2nd piece of code here produces the core as Nock--note that its final element is `140`, the base parent atom that stops jet matching recursion.
 ```
 > +>:..add
@@ -59,6 +57,23 @@ We get the same thing if we take the tail of the tail of the core with `biff` (l
 <1.pnw %140>
 > .*(. !=(+>:..biff))
 [[0 3] 140]
+```
+
+### More Detailed Example, with `tree.c`
+In [line 455 of tree.c](https://github.com/urbit/urbit/blob/b0c9fd1940fe1c119438947ac0a45bafec135860/pkg/urbit/jets/tree.c#L455), we see that the `_140_hex_d` (Arvo) core declares a child called `mimes`. It says that `mimes` parent lives in axis 31. Does that line up with the code?
+
+`mimes` [is declared in zuse.hoon](https://github.com/urbit/urbit/blob/b0c9fd1940fe1c119438947ac0a45bafec135860/pkg/arvo/sys/zuse.hoon#L3899). It says that its parent is `..part`, i.e. the core containing `part` (declared in `arvo.hoon`).
+
+We can verify that the core containing `part` is at axis 31 of `mimes` like so:
+```
+::  note that from "14.slg", they're the same
+> ..part
+<14.wru 52.slg 77.wir 232.wfe 51.qbt 123.zao 46.hgz 1.pnw %140>
+> ..mimes:html
+<13?vdb 16.wbm 33.kwz 14.wru 52.slg 77.wir 232.wfe 51.qbt 123.zao 46.hgz 1.pnw %140>
+
+> =(..part +31:mimes:html)
+%.y
 ```
 
 ## Jet Walkthrough
