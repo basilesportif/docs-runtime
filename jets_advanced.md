@@ -31,7 +31,8 @@ Since `!=` gets a Nock formula, we can run that formula against the dojo subject
 It's easy to get confused between arms and cores, particularly because arms can produce cores/gates. Remember: arms are just Nock formulas, while cores have formulas on the left side of their tree, and data (context) on the right side.
 
 ## The Core Stack & Parent Registration/Location
-**TODO** ask Ted what we want to explain here.
+**TODO** clarify exactly what ot explain here
+
 All jet lookups depend on recurring back to the "bottom" of the "core stack". This is the subject that is built when an Urbit is booted up. Here's what is produced:
 **TODO** INSERT DIAGRAM
 
@@ -85,6 +86,7 @@ Note that this is similar to Nock `[9 36 0 2.047]`--we just don't pull the arm a
 
 ### The Compiled Hint
 **TODO** walk through the compilation of the hint at the `sggl` level
+
 `add-arm` is a Nock 7 that composes two operations. The first (starting with `[8...`) is just  the formula that produces the add gate. The second operation is our jet hint:
 ```
  11
