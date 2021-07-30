@@ -28,20 +28,21 @@ Since `!=` gets a Nock formula, we can run that formula against the dojo subject
 ```
 
 ### Reminders
-It's easy to get confused between arms and cores, particularly because arms can produce cores/gates. Remember: arms are just Nock formulas, while cores have formulas on the left side of their tree, and data (context) on the right side.
+It's easy to get confused between arms and cores, particularly because arms can produce cores/gates. Remember: arms are just Nock formulas, while cores have formulas on the left side of their tree, and data (payload) on the right side.
 
 ## The Core Stack & Parent Registration/Location
 **TODO** clarify exactly what ot explain here
+**TODO** insert examples of `..zuse`, `..lull`, `+:..part` etc
 
 All jet lookups depend on recurring back to the "bottom" of the "core stack". This is the subject that is built when an Urbit is booted up. Here's what is produced:
-**TODO** INSERT DIAGRAM
+![full stack diagram](img/full_stack.png)
 
 Arvo is bootstrapped with a pre-compiled `hoon.hoon`, and then `lull` and `zuse` are compiled with Arvo as the subject. This creates that stack of cores, and we can observe it by **TODO**
 
 ### Basic Examples
-The context of the core containing `add is` the anchor core in line 10 of `hoon.hoon`. The 2nd piece of code here produces the core as Nock--note that its final element is `140`, the base parent atom that stops jet matching recursion.
+The payload of the core containing `add is` the anchor core in line 10 of `hoon.hoon`. The 2nd piece of code here produces the core as Nock--note that its final element is `140`, the base parent atom that stops jet matching recursion.
 ```
-> +>:..add
+> +:..add
 <1.pnw %140>
 > .*(. !=(+:..add))
 [[0 3] 140]
@@ -78,11 +79,12 @@ We can verify that the core containing `part` is at axis 31 of `mimes` like so:
 ```
 
 ## Jet Walkthrough
-Now we will walk through the Hoon, Nock, and runtime registrations of the `add` jet in full. Before starting, run the below code, which sets `add-arm` to the formula that produces the `add` gate:
+Now we will walk through the Hoon, Nock, and runtime registrations of the `add` jet in full. Before starting, run the below code, which sets `add-arm` to the formula that produces the `add` gate. 
+
+Note that this uses Nock 7, *not* Nock 9, similar to Nock `[9 36 0 2.047]`--we just don't pull the arm against the subject yet.
 ```
 =add-arm .*(. [7 [0 2.047] 0 36])
 ```
-Note that this is similar to Nock `[9 36 0 2.047]`--we just don't pull the arm against the subject yet.
 
 ### The Compiled Hint
 **TODO** walk through the compilation of the hint at the `sggl` level
