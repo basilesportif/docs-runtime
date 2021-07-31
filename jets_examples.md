@@ -35,6 +35,7 @@ It's easy to get confused between arms and cores, particularly because arms can 
 
 ## The Core Stack & Parent Registration/Location
 All jet lookups depend on recurring back to the "bottom" of the "core stack". This is the subject that is built when an Urbit is booted up. Here's what is produced:
+
 ![full stack diagram](img/full_stack.png)
 
 Arvo is bootstrapped with a pre-compiled `hoon.hoon`, and then `lull` and `zuse` are compiled with Arvo as the subject. This creates the above stack of cores, which we can inspect by looking at the subjects of arms in them:
