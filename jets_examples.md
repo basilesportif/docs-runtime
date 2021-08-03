@@ -38,6 +38,8 @@ All jet lookups depend on recurring back to the "bottom" of the "core stack". Th
 
 ![full stack diagram](img/full_stack.png)
 
+*Note on core printing: cores print as <N.xyz payload>, where N is the number of arms in the battery, xyz is a hash of the core, and payload can be another core.*
+
 Arvo is bootstrapped with a pre-compiled `hoon.hoon`, and then `lull` and `zuse` are compiled with Arvo as the subject. This creates the above stack of cores, which we can inspect by looking at the subjects of arms in them:
 ```
 ::  Layer 1
