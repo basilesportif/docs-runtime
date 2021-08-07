@@ -1,7 +1,7 @@
 ~%  %playcore  ..part  ~
 |%
-++  playjet
-  ~/  %playjet
+++  sime
+  ~/  %sime
   |=  a=@  
   ^-  @
   a
