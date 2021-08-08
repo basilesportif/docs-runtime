@@ -11,6 +11,14 @@
   {
     fprintf(stderr, "u3qe_playcore_sime\n\r");
     u3k(n);
+
+    if ( c3y == u3a_is_cat(n) ) {
+      fprintf(stderr, "it's a short atom (cat)\n\r");
+    }
+    else if ( c3y == u3a_is_dog(n) ) {
+      fprintf(stderr, "it's a long atom or cell (dog)\n\r");
+    }
+
     return n;
   }
 
