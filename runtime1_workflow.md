@@ -85,3 +85,6 @@ In the following lessons, we'll use this as our base for playing with the runtim
 
 ## Exercises
 1. For nouns that are `dog`s, do a further check as to whether they're `pug`s (long atoms) or `pom`s (cells). The necessary macros are in `allocate.h`.
+2. Delete the registration of `playcore` in _140_hex_d, the line below:
+  `{ "playcore",   31, 0, _140_hex__playcore_d, _140_hex__playcore_ha  },`
+Now re-compile and run the binary and some `sime` calls. What happens and why?
