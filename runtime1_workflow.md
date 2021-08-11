@@ -1,7 +1,7 @@
 # Runtime Workflow
 The goal of this lesson is to set up a workflow for iteratively inspecting data structures and operations in the runtime. At the end, we'll have a C file (`playcore.c`) that we can edit and re-compile to inspect the runtime.
 
-To do this lesson, you should have gone through the [jet](https://github.com/timlucmiptev/docs-runtime/blob/master/jets1_current.md) [explainers](https://github.com/timlucmiptev/docs-runtime/blob/master/jets2_examples.md) and know [how to set up a fakeship](https://github.com/timlucmiptev/gall-guide/blob/master/workflow.md).
+To do this lesson, you should have gone through the [jet](https://github.com/timlucmiptev/docs-runtime/blob/master/jets1_current.md) [explainers](https://github.com/timlucmiptev/docs-runtime/blob/master/jets2_examples.md) and know [how to set up a fakeship](https://github.com/timlucmiptev/gall-guide/blob/master/workflow.md).  You also may want to go through [~lagrev-nocfep's jetting tutorial](https://github.com/natareo/tutorials/blob/main/jetting.md).
 
 ## Setup
 1. Clone the urbit/urbit project
