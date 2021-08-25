@@ -4,11 +4,16 @@
 **TODO** explain exactly what the Loom pointer is pointing to
 
 ## Atoms and Endianness
-Vere assumes that the system it is running on is little-endian, meaning that numbers are stored least-significant-byte-first. For example, the number `0xffaa` is stored internally as the bytes `{0xaa 0xff}`.
+Vere assumes that the system it is running on is little-endian, meaning that numbers are stored least-significant-byte-first. For example, the number `0xffaa` is stored internally as the bytes `{0xaa, 0xff, 0x00, 0x00}` (in a system with 32-bit words).
 
 Vere represents long atoms as [arrays of words](https://github.com/urbit/urbit/blob/3fc5db758b5b27e574da4d1254768d480998ce63/pkg/urbit/include/noun/allocate.h#L53). The `c3_w` (word) buffer `buf_w` stores the words of the atom least-significant-word-first. So the number `0xdeadbeefaabbccdd` is stored internally as a `u3a_atom` with `buf_w = {0xaabbccdd, 0xdeadbeef}`. (Note that the 
  
-
+So the below data structures from the example code produce the same atom, when fed into `u3i_bytes` and `u3i_words`, respectively:
+(the example code uses `print_atom` on each to show that they're the same)
+```
+c3_y buf2[8] = {0xdd, 0xee, 0xbb, 0x00, 0x44, 0x33, 0x22, 0x00};
+c3_w ws[2] = {0xbbeedd, 0x223344};
+```
 
 ## Nouns in Vere and the Allocator
 The [definition of a u3 noun](https://github.com/urbit/urbit/blob/3fc5db758b5b27e574da4d1254768d480998ce63/pkg/urbit/include/noun/aliases.h#L35) is just a `c3_w`, i.e. a 32-bit integer.
