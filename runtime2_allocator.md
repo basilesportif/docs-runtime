@@ -1,6 +1,7 @@
 # Nouns & Vere Allocator
 
 ## Description
+![tree of cores diagram](img/allocator_box.png)
 **TODO** explain exactly what the Loom pointer is pointing to, in terms of boxes
 - this involves showing how `u3a_botox` is a simple:
   * go to real pointer
