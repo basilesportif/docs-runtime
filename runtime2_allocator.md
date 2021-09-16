@@ -1,12 +1,5 @@
 # Nouns & Vere Allocator
 
-## Description
-![tree of cores diagram](img/allocator_box.png)
-**TODO** explain exactly what the Loom pointer is pointing to, in terms of boxes
-- this involves showing how `u3a_botox` is a simple:
-  * go to real pointer
-  * step back the size of a `u3a_box`
-  * return that
 
 ## Atoms and Endianness
 Vere assumes that the system it is running on is little-endian, meaning that numbers are stored least-significant-byte-first. For example, the number `0xffaa` is stored internally as the bytes `{0xaa, 0xff, 0x00, 0x00}` (in a system with 32-bit words).
@@ -37,8 +30,20 @@ To inspect the cell's head and tail, we need to access the actual data structure
 [allocate.h provides the helper macro `u3a_to_ptr`](https://github.com/urbit/urbit/blob/3fc5db758b5b27e574da4d1254768d480998ce63/pkg/urbit/include/noun/allocate.h#L205), which first strips the high 2 bits using `u3a_to_off`, and then uses the `u3a_into` macro to add the resulting offset to the `u3_Loom` value, which is the starting point in memory of the Loom.
 
 The pointer from `u3a_into` is a `(void *)`, so it's up to us to know whether the pointer is to a `u3a_atom` or a `u3a_cell`. Since we already did the `u3a_is_pom` check, we know it's a cell, so we cast to that and then take the `hed` and `tel`.
+*(We code do this cell deconstruction less manually with u3x_ functions, and are just using this manual way for demonstration purposes)*
 
 `hed` and `tel` are themselves are `u3_noun`s, so we can print them out directly. `hed` is a `cat`, and `tel` is a Loom pointer. 
+
+## Boxes and the Loom In-Depth
+Refer to the below diagram.
+
+![tree of cores diagram](img/allocator_box.png)
+
+Here we see that our `u3_noun`s, when they are Loom pointers, can first be converted to real pointers, and then we can either access the data structure there directly, or get a reference to its `box`.
+
+[u3a_box](https://github.com/urbit/urbit/blob/3fc5db758b5b27e574da4d1254768d480998ce63/pkg/urbit/include/noun/allocate.h#L79) is a struct that holds noun metadata: the size in words of the noun (siz_w) as well as its reference count (`use_w`). To access the box, simply use `u3a_botox` on a real pointer. We do this in the `print_box` function at the top of `playcore.c`.  
+
+The code for `u3a_botox` is simple: it just "steps back" in memory the size of a box. All nouns on the Loom have this `box` metadata.
 
 ## Noun Lifecycle
 Let's make this discussion more concrete by just going ahead and creating some nouns. As we do so, we can inspect them to see what is happening inside the allocator . We will also walk through the code that allocates each noun.
@@ -78,4 +83,6 @@ Function flow
 **TODO** do `u3a_botox` on the cell's raw pointer to show it on the Loom (see me_gain)
 - botox takes the pointer given, then steps back the size of box, which can be done for EVERYTHING on the Loom.
 
-## Initialization
+## Gain and Lose
+Let's walk through how refcounts increase and decrease when `u3a_gain` and `u3a_lose` (shorthand: `u3k` & `u3z`) are called.
+**TODO** do this

@@ -4,6 +4,14 @@
 #include "all.h"
 #include <stdio.h>
 
+void print_box(char* label, u3_noun n)
+{
+  c3_assert(c3y == u3a_is_dog(n));
+  c3_w siz = u3a_botox(u3a_to_ptr(n))->siz_w;
+  c3_w use = u3a_botox(u3a_to_ptr(n))->use_w;
+  fprintf(stderr, "%s: siz_w: %d, use_w: %d\n\r", label, siz, use);
+}
+
 void print_atom(char* label, u3_atom a)
 {
   mpz_t a_mp;
@@ -41,23 +49,26 @@ void print_atom(char* label, u3_atom a)
       fprintf(stderr, "my_cell is a pom (i.e. a cell)\n\r");
     fprintf(stderr, "my_cell (Loom pointer with high 3 bits set to 110): 0x%x\n\r", my_cell);
     
+    // note: we could use u3_x_* functions to do this extraction
     u3_noun h = ((u3a_cell*)u3a_to_ptr(my_cell))->hed;
     u3_noun t = ((u3a_cell*)u3a_to_ptr(my_cell))->tel;
 
-   /*
+    /* 
     u3_noun hed, tel;
     u3x_cell(my_cell, &hed, &tel);
     */
     print_atom("head (simple cat atom)", h);
     fprintf(stderr, "tail (Loom pointer with high 3 bits set to 100): 0x%x\n\r", t);
 
-    u3a_lose(my_cell);
+    //  same as u3a_gain
+    u3k(my_cell);
+    print_box("my_cell box", my_cell);
+
+    // same as u3a_lose
+    u3z(my_cell);
+    print_box("my_cell box after u3z", my_cell);
     u3k(bytes_atom);
-
-    // TODO: the below will crash
-//    u3z(cat_atom);
-
- //   u3z(pug_atom);
+    print_box("bytes_atom box", bytes_atom);
 
     return n;
   }
