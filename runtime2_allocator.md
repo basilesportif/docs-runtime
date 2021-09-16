@@ -2,6 +2,10 @@
 
 ## Description
 **TODO** explain exactly what the Loom pointer is pointing to, in terms of boxes
+- this involves showing how `u3a_botox` is a simple:
+  * go to real pointer
+  * step back the size of a `u3a_box`
+  * return that
 
 ## Atoms and Endianness
 Vere assumes that the system it is running on is little-endian, meaning that numbers are stored least-significant-byte-first. For example, the number `0xffaa` is stored internally as the bytes `{0xaa, 0xff, 0x00, 0x00}` (in a system with 32-bit words).
@@ -66,9 +70,11 @@ Function flow
 * u3i_slab_bare
 * _ci_slab_init (28)
 * u3i_slab_moot (253) 
+**NOTE**: box stuff all happens in `allocate.c`, `_ca_willoc`
 
 **TODO** instructions to install new jets file
 **TODO** deconstruct the cell manually instead of using u3x_cell. Use u3a_to_ptr, which makes my noun into a real pointer
-**TODO** do botox on the cell to show it on the Loom (see me_gain)
+**TODO** do `u3a_botox` on the cell's raw pointer to show it on the Loom (see me_gain)
+- botox takes the pointer given, then steps back the size of box, which can be done for EVERYTHING on the Loom.
 
 ## Initialization
